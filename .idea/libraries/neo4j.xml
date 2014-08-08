@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="neo4j">
+    <CLASSES>
+      <root url="file://$USER_HOME$/neo4j/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$USER_HOME$/neo4j/lib" recursive="false" />
+    <jarDirectory url="file://E:/Neo4J/lib" recursive="false" />
+  </library>
+</component>
