@@ -14,29 +14,35 @@ import java.util.Map;
 public class AddressLoad {
     public static void Run(String path,BatchInserter inserter) throws Exception {
         Label label = DynamicLabel.label("Address");
+        BatchInserterIndexProvider indexProvider = new LuceneBatchInserterIndexProvider(inserter);
+        BatchInserterIndex ix =indexProvider.nodeIndex("id", MapUtil.stringMap("type","exact"));
         int counter=0;
 
-            CsvReader consumerReader = new CsvReader(path + "Neo4JAddress.csv");
-            consumerReader.readHeaders();
-            Long curr=System.currentTimeMillis();
-            while (consumerReader.readRecord()) {
-                Map<String, Object> properties = new HashMap<String, Object>();
-                properties.put("Street",consumerReader.get("Street"));
-                properties.put("City",consumerReader.get("City"));
-                properties.put("State",consumerReader.get("State"));
-                properties.put("Zip",consumerReader.get("Zip"));
+        CsvReader reader = new CsvReader(path + "Address.csv");
+        reader.readHeaders();
+        Long curr=System.currentTimeMillis();
+        while (reader.readRecord()) {
+            Map<String, Object> properties = new HashMap<String, Object>();
+            properties.put("Street",reader.get("Street"));
+            properties.put("City",reader.get("City"));
+            properties.put("State",reader.get("State"));
+            properties.put("Zip",reader.get("Zip"));
+            final String id = reader.get("Id");
+            properties.put("Id", id);
 
-                final Long node = Long.parseLong(consumerReader.get("aId"));
-                inserter.createNode(node, properties, label);
-                counter++;
-                if(counter%1000000==0)
-                {
-                    System.out.print(counter/1000000);
-                    System.out.print("M Addresses in ");
-                    System.out.println(System.currentTimeMillis()-curr);
-                    curr=System.currentTimeMillis();
-                }
+            long node = inserter.createNode(properties, label);
+            ix.add(node,MapUtil.map("id",id));
+            counter++;
+            if(counter%1000000==0)
+            {
+                ix.flush();
+                System.out.print(counter/1000000);
+                System.out.print("M Addresses in ");
+                System.out.println(System.currentTimeMillis()-curr);
+                curr=System.currentTimeMillis();
             }
-            consumerReader.close();
-            }
+        }
+        indexProvider.shutdown();
+        reader.close();
+        }
 }
